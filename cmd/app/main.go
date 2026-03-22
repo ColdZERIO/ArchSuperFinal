@@ -1,6 +1,9 @@
 package main
 
 import (
+	"Go/internal/handlers"
+	"Go/internal/repository"
+	services "Go/internal/service"
 	pkg "Go/pkg/db"
 	"log"
 	"net/http"
@@ -13,6 +16,9 @@ import (
 
 func main() {
 	err := godotenv.Load()
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	port := getEnv("TODO_PORT", ":7540")
 	dbFile := getEnv("TODO_DBFILE", "scheduler.db")
@@ -26,11 +32,23 @@ func main() {
 		return
 	}
 
-	srv := chi.NewRouter()
+	db, err := pkg.Connection()
+	if err != nil {
+		log.Fatal("cant connect database")
+		return
+	}
 
+	repo := repository.NewRepository(db)
+	svc := services.NewService(repo)
+	hand := handlers.NewHandler(svc)
+
+	srv := chi.NewRouter()
 	srv.Handle("/*", http.FileServer(http.Dir(webDir)))
 
 	log.Printf("Server START http://localhost%s/\n", port)
+
+	srv.Post("/api/task", hand.TaskHandler)
+
 	log.Fatal(http.ListenAndServe(port, srv))
 }
 

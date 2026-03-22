@@ -12,7 +12,7 @@ var (
 	layout = "20060102"
 )
 
-func NextDate(now time.Time, dstart string, repeat string) (string, error) {
+func (s *Service) NextDate(now time.Time, dstart string, repeat string) (string, error) {
 	err := repeatCheck(repeat)
 	if err != nil {
 		return "", err
@@ -23,7 +23,7 @@ func NextDate(now time.Time, dstart string, repeat string) (string, error) {
 		return "", errors.New("invalid date format")
 	}
 
-	nextDate, err := NextDateAfter(now, dStartFormat, repeat)
+	nextDate, err := s.NextDateAfter(now, dStartFormat, repeat)
 	if err != nil {
 		return "", err
 	}
@@ -31,7 +31,7 @@ func NextDate(now time.Time, dstart string, repeat string) (string, error) {
 	return nextDate.Format(layout), nil
 }
 
-func NextDateAfter(now, start time.Time, repeat string) (time.Time, error) {
+func (s *Service) NextDateAfter(now, start time.Time, repeat string) (time.Time, error) {
 	repeatSplit := strings.Fields(strings.TrimSpace(repeat))
 
 	if len(repeatSplit) == 0 {
@@ -40,9 +40,9 @@ func NextDateAfter(now, start time.Time, repeat string) (time.Time, error) {
 
 	switch repeatSplit[0] {
 	case "d":
-		return NextDays(now, start, repeatSplit...)
+		return nextDays(now, start, repeatSplit...)
 	case "y":
-		return NextYear(now, start, repeatSplit...)
+		return nextYear(now, start, repeatSplit...)
 	// case "w":
 	// 	return time.Time{}, errors.New("invalid repeat format")
 	// 	// add func for week
@@ -54,7 +54,7 @@ func NextDateAfter(now, start time.Time, repeat string) (time.Time, error) {
 	}
 }
 
-func NextDays(now, start time.Time, parts ...string) (time.Time, error) {
+func nextDays(now, start time.Time, parts ...string) (time.Time, error) {
 	if len(parts) != 2 {
 		return time.Time{}, ErrInvalidFormatMessage
 	}
@@ -77,7 +77,7 @@ func NextDays(now, start time.Time, parts ...string) (time.Time, error) {
 	return newDate, nil
 }
 
-func NextYear(now, start time.Time, parts ...string) (time.Time, error) {
+func nextYear(now, start time.Time, parts ...string) (time.Time, error) {
 	if len(parts) != 1 {
 		return time.Time{}, ErrInvalidFormatMessage
 	}
@@ -106,7 +106,7 @@ func repeatCheck(repeat string) error {
 
 	letter := repeatSplit[0]
 
-	if letter == "" || letter != "d" || letter != "y" || letter != "w" || letter != "m" {
+	if letter == "" || letter != "d" || letter != "y" { // || letter != "w" || letter != "m"
 		return errMessage
 	}
 

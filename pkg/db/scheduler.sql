@@ -6,4 +6,4 @@ CREATE TABLE IF NOT EXISTS todo(
     repeat VARCHAR(128) NOT NULL DEFAULT ''
 );
 
-CREATE INDEX IF NOT EXISTS todo_index ON todo(date);
+CREATE INDEX IF NOT EXISTS date_index ON todo(date);

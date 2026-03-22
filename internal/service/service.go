@@ -1,20 +1,20 @@
 package services
 
 import (
-	"time"
+	"Go/internal/models"
+	"log"
 )
 
-type Todo struct {
-	id      int
-	date    time.Time
-	title   string
-	comment string
-	repeat  string
+type Task struct {
+	ID      string `json:"id"`
+	Date    string `json:"date"`
+	Title   string `json:"title"`
+	Comment string `json:"comment"`
+	Repeat  string `json:"repeat"`
 }
 
 type Repository interface {
-	SelectDB()
-	InsertDB()
+	InsertSQL(*models.Task) error
 }
 
 type Service struct {
@@ -23,4 +23,13 @@ type Service struct {
 
 func NewService(repo Repository) *Service {
 	return &Service{repo: repo}
+}
+
+func (s *Service) AddTask(task *models.Task) error {
+	err := s.repo.InsertSQL(task)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+	return nil
 }
