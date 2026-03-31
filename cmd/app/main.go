@@ -23,7 +23,6 @@ func main() {
 	port := getEnv("TODO_PORT", ":7540")
 	dbFile := getEnv("TODO_DBFILE", "scheduler.db")
 
-	log.Println(port)
 	webDir := "./web"
 
 	err = pkg.Init(dbFile)
@@ -34,9 +33,10 @@ func main() {
 
 	db, err := pkg.Connection()
 	if err != nil {
-		log.Fatal("cant connect database")
+		log.Fatal("cant connect database:", err)
 		return
 	}
+	defer db.Close()
 
 	repo := repository.NewRepository(db)
 	svc := services.NewService(repo)

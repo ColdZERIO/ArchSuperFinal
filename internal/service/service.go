@@ -2,7 +2,9 @@ package services
 
 import (
 	"Go/internal/models"
+	"encoding/json"
 	"log"
+	"net/http"
 )
 
 type Task struct {
@@ -25,8 +27,18 @@ func NewService(repo Repository) *Service {
 	return &Service{repo: repo}
 }
 
-func (s *Service) AddTask(task *models.Task) error {
-	err := s.repo.InsertSQL(task)
+func (s *Service) AddTask(r *http.Request) error {
+	var task models.Task
+
+	decod := json.NewDecoder(r.Body)
+	err := decod.Decode(&task)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+	defer r.Body.Close()
+
+	err = s.repo.InsertSQL(&task)
 	if err != nil {
 		log.Println(err)
 		return err
