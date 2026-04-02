@@ -17,6 +17,7 @@ type Task struct {
 
 type Repository interface {
 	InsertSQL(*models.Task) error
+	SelectSQL(models.Task) ([]models.Task, error)
 }
 
 type Service struct {
@@ -44,4 +45,15 @@ func (s *Service) AddTask(r *http.Request) error {
 		return err
 	}
 	return nil
+}
+
+func (s *Service) TasksList() error {
+	var task models.Task
+
+	tasks, err := s.repo.SelectSQL(task)
+	if err != nil {
+		return err
+	}
+
+	
 }

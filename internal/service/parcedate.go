@@ -10,9 +10,10 @@ import (
 var (
 	ErrInvalidFormatMessage = errors.New("invalid repeat format")
 	layout = "20060102"
+	timeNow = time.Now()
 )
 
-func (s *Service) NextDate(now time.Time, dstart string, repeat string) (string, error) {
+func NextDate(now time.Time, dstart string, repeat string) (string, error) {
 	err := repeatCheck(repeat)
 	if err != nil {
 		return "", err
@@ -23,7 +24,7 @@ func (s *Service) NextDate(now time.Time, dstart string, repeat string) (string,
 		return "", errors.New("invalid date format")
 	}
 
-	nextDate, err := s.NextDateAfter(now, dStartFormat, repeat)
+	nextDate, err := NextDateAfter(now, dStartFormat, repeat)
 	if err != nil {
 		return "", err
 	}
@@ -31,7 +32,7 @@ func (s *Service) NextDate(now time.Time, dstart string, repeat string) (string,
 	return nextDate.Format(layout), nil
 }
 
-func (s *Service) NextDateAfter(now, start time.Time, repeat string) (time.Time, error) {
+func NextDateAfter(now, start time.Time, repeat string) (time.Time, error) {
 	repeatSplit := strings.Fields(strings.TrimSpace(repeat))
 
 	if len(repeatSplit) == 0 {
@@ -106,7 +107,7 @@ func repeatCheck(repeat string) error {
 
 	letter := repeatSplit[0]
 
-	if letter == "" || letter != "d" || letter != "y" { // || letter != "w" || letter != "m"
+	if letter != "" && letter != "d" || letter != "y" { // || letter != "w" || letter != "m"
 		return errMessage
 	}
 

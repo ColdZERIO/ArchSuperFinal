@@ -31,7 +31,7 @@ func main() {
 		return
 	}
 
-	db, err := pkg.Connection()
+	db, err := pkg.Connection(dbFile)
 	if err != nil {
 		log.Fatal("cant connect database:", err)
 		return
@@ -48,6 +48,7 @@ func main() {
 	log.Printf("Server START http://localhost%s/\n", port)
 
 	srv.Post("/api/task", hand.TaskHandler)
+	srv.Get("/api/task", hand.TaskHandler)
 
 	log.Fatal(http.ListenAndServe(port, srv))
 }

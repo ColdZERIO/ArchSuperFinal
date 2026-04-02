@@ -8,13 +8,12 @@ import (
 	_ "modernc.org/sqlite"
 )
 
-func Connection() (*sql.DB, error) {
-	db, err := sql.Open("sqlite", "scheduler.db")
+func Connection(dbFile string) (*sql.DB, error) {
+	db, err := sql.Open("sqlite", dbFile)
 	if err != nil {
 		log.Fatal("cant open sql file:", err)
 		return nil, err
 	}
-	defer db.Close()
 
 	return db, nil
 }

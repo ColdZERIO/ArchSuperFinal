@@ -1,15 +1,12 @@
 package handlers
 
 import (
-	"log"
 	"net/http"
-	"time"
 )
 
 type Service interface {
-	NextDate(time.Time, string, string) (string, error)
-	NextDateAfter(time.Time, time.Time, string) (time.Time, error)
 	AddTask(r *http.Request) error
+	TasksList()
 }
 
 type Handler struct {
@@ -25,10 +22,13 @@ func (h *Handler) TaskHandler(w http.ResponseWriter, r *http.Request) {
 	case http.MethodPost:
 		err := h.service.AddTask(r)
 		if err != nil {
-			log.Fatal(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+		w.WriteHeader(http.StatusOK)
+	case http.MethodGet:
+		
 	}
 }
