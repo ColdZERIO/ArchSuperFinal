@@ -55,5 +55,5 @@ func (s *Service) TasksList() error {
 		return err
 	}
 
-	
+	encod := json.NewEncoder()
 }
