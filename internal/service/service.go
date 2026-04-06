@@ -3,8 +3,10 @@ package services
 import (
 	"Go/internal/models"
 	"encoding/json"
+	"errors"
 	"log"
 	"net/http"
+	"strconv"
 )
 
 type Task struct {
@@ -18,6 +20,8 @@ type Task struct {
 type Repository interface {
 	InsertSQL(*models.Task) error
 	SelectSQL(models.Task) ([]models.Task, error)
+	SelectByID(int) (models.Task, error)
+	UpdateSQL(models.Task) error
 }
 
 type Service struct {
@@ -47,7 +51,7 @@ func (s *Service) AddTask(r *http.Request) error {
 	return nil
 }
 
-func (s *Service) TasksList() error {
+func (s *Service) TasksList(w http.ResponseWriter) error {
 	var task models.Task
 
 	tasks, err := s.repo.SelectSQL(task)
@@ -55,5 +59,36 @@ func (s *Service) TasksList() error {
 		return err
 	}
 
-	
+	encod := json.NewEncoder(w)
+	err = encod.Encode(tasks)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+
+	return nil
+}
+
+func (s *Service) UpdateTask(r *http.Request) error {
+	queryID := r.URL.Query().Get("id")
+	if queryID == "" {
+		return errors.New("id is empty")
+	}
+
+	id, err := strconv.Atoi(queryID)
+	if err != nil {
+		return errors.New("invalid id format")
+	}
+
+	task, err := s.repo.SelectByID(id)
+	if err != nil {
+		return err
+	}
+
+	err = s.repo.UpdateSQL(task)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

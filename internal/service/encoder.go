@@ -6,7 +6,7 @@ import (
 	"os"
 )
 
-func decoderJson(filename string, tasks []models.Task) error {
+func encoderJson(filename string, tasks []models.Task) error {
 	file, err := os.Create(filename)
 	if err != nil {
 		return err

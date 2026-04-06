@@ -16,7 +16,7 @@ func NewRepository(db *sql.DB) *Repository {
 
 func (r *Repository) InsertSQL(task *models.Task) error {
 	query := `
-	INSERT INTO todo (date, title, comment, repeat)
+	INSERT INTO scheduler (date, title, comment, repeat)
 	VALUES (:date, :title, :comment, :repeat);
 	`
 
@@ -33,7 +33,7 @@ func (r *Repository) InsertSQL(task *models.Task) error {
 func (r *Repository) SelectSQL(task models.Task) ([]models.Task, error) {
 	query := `
 	SELECT title, comment, date
-	FROM todo
+	FROM scheduler
 	ORDER BY id DESC
 	LIMIT 50;
 	`
@@ -56,5 +56,46 @@ func (r *Repository) SelectSQL(task models.Task) ([]models.Task, error) {
 		tasks = append(tasks, task)
 	}
 
+	err = rows.Err()
+	if err != nil {
+		return nil, err
+	}
+
 	return tasks, nil
+}
+
+func (r *Repository) UpdateSQL(task models.Task) error {
+	query := `
+	UPDATE scheduler
+	SET date = :date, title = :title, comment = :comment, repeat = :repeat
+	WHERE id = :id;
+	`
+
+	_, err := r.db.Exec(query,
+		sql.Named("date", task.Date),
+		sql.Named("title", task.Title),
+		sql.Named("comment", task.Comment),
+		sql.Named("repeat", task.Repeat),
+	)
+
+	return err
+}
+
+func (r *Repository) SelectByID(id int) (models.Task, error) {
+	query := `
+	SELECT id, date, title, comment, repeat
+	FROM scheduler
+	WHERE id = :id;
+	`
+
+	row := r.db.QueryRow(query, sql.Named("id", id))
+
+	var task models.Task
+
+	err := row.Scan(&task.ID, &task.Date, &task.Title, &task.Comment, &task.Repeat)
+	if err != nil {
+		return models.Task{}, err
+	}
+
+	return task, nil
 }
