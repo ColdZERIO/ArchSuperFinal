@@ -25,15 +25,9 @@ func main() {
 
 	webDir := "./web"
 
-	err = pkg.Init(dbFile)
+	db, err := pkg.Init(dbFile)
 	if err != nil {
 		log.Fatal(err)
-		return
-	}
-
-	db, err := pkg.Connection(dbFile)
-	if err != nil {
-		log.Fatal("cant connect database:", err)
 		return
 	}
 	defer db.Close()

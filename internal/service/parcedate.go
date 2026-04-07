@@ -41,26 +41,16 @@ func NextDateAfter(now, start time.Time, repeat string) (time.Time, error) {
 
 	switch repeatSplit[0] {
 	case "d":
-		return nextDays(now, start, repeatSplit...)
+		return nextDays(now, start, repeatSplit[1])
 	case "y":
-		return nextYear(now, start, repeatSplit...)
-	// case "w":
-	// 	return time.Time{}, errors.New("invalid repeat format")
-	// 	// add func for week
-	// case "m":
-	// 	return time.Time{}, errors.New("invalid repeat format")
-	// 	// add func for month
+		return nextYear(now, start, repeatSplit[1])
 	default:
 		return time.Time{}, errors.New("invalid repeat format")
 	}
 }
 
-func nextDays(now, start time.Time, parts ...string) (time.Time, error) {
-	if len(parts) != 2 {
-		return time.Time{}, ErrInvalidFormatMessage
-	}
-
-	numb, err := strconv.Atoi(parts[1])
+func nextDays(now, start time.Time, part string) (time.Time, error) {
+	numb, err := strconv.Atoi(part)
 	if err != nil {
 		return time.Time{}, err
 	}
@@ -78,24 +68,12 @@ func nextDays(now, start time.Time, parts ...string) (time.Time, error) {
 	return newDate, nil
 }
 
-func nextYear(now, start time.Time, parts ...string) (time.Time, error) {
-	if len(parts) != 1 {
-		return time.Time{}, ErrInvalidFormatMessage
-	}
+func nextYear(now, start time.Time, part string) (time.Time, error) {
 
 	newYear := now.AddDate(1, 0, 0)
 
 	return newYear, nil
 }
-
-// func NextWeekDays(now, start time.Time, parts ...string) (time.Time, error) {
-// 	if len(parts) != 2 {
-// 		return time.Time{}, ErrInvalidFormatMessage
-// 	}
-
-// 	maxValue := 7
-
-// }
 
 func repeatCheck(repeat string) error {
 	if repeat == "" {
@@ -107,7 +85,7 @@ func repeatCheck(repeat string) error {
 
 	letter := repeatSplit[0]
 
-	if letter != "" && letter != "d" || letter != "y" { // || letter != "w" || letter != "m"
+	if letter != "" && letter != "d" || letter != "y" {
 		return errMessage
 	}
 

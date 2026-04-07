@@ -1,12 +1,14 @@
 package handlers
 
 import (
+	"encoding/json"
 	"net/http"
 )
 
 type Service interface {
-	AddTask(r *http.Request) error
-	TasksList()
+	AddTask(*http.Request) (int, error)
+	TasksList(http.ResponseWriter) error
+	UpdateTask(*http.Request) error
 }
 
 type Handler struct {
@@ -20,7 +22,7 @@ func NewHandler(service Service) *Handler {
 func (h *Handler) TaskHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodPost:
-		err := h.service.AddTask(r)
+		id, err := h.service.AddTask(r)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -28,7 +30,32 @@ func (h *Handler) TaskHandler(w http.ResponseWriter, r *http.Request) {
 
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.WriteHeader(http.StatusOK)
+
+		json.NewEncoder(w).Encode(map[string]any{
+			"id" : id,
+		})
+
 	case http.MethodGet:
-		
+		err := h.service.TasksList(w)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+		w.WriteHeader(http.StatusOK)
+	
+	case http.MethodPut:
+		err := h.service.UpdateTask(r)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+		w.WriteHeader(http.StatusOK)
+
+	default:
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
 }
