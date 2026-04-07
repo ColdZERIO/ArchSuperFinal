@@ -7,7 +7,7 @@ import (
 
 type Service interface {
 	AddTask(*http.Request) (int, error)
-	TasksList(http.ResponseWriter) error
+	GetTasksList(http.ResponseWriter) error
 	UpdateTask(*http.Request) error
 }
 
@@ -36,7 +36,7 @@ func (h *Handler) TaskHandler(w http.ResponseWriter, r *http.Request) {
 		})
 
 	case http.MethodGet:
-		err := h.service.TasksList(w)
+		err := h.service.GetTasksList(w)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return

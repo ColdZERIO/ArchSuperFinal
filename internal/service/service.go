@@ -7,21 +7,14 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 )
 
-type Task struct {
-	ID      string `json:"id"`
-	Date    string `json:"date"`
-	Title   string `json:"title"`
-	Comment string `json:"comment"`
-	Repeat  string `json:"repeat"`
-}
-
 type Repository interface {
-	InsertSQL(*models.Task) (int, error)
-	SelectSQL() ([]models.Task, error)
-	SelectByID(int) (models.Task, error)
-	UpdateSQL(models.Task) error
+	AddData(*models.Task) (int, error)
+	GetData() ([]models.Task, error)
+	GetDataByID(int) (models.Task, error)
+	UpdateDataByID(models.Task) error
 }
 
 type Service struct {
@@ -43,7 +36,7 @@ func (s *Service) AddTask(r *http.Request) (int, error) {
 	}
 	defer r.Body.Close()
 
-	id, err := s.repo.InsertSQL(&task)
+	id, err := s.repo.AddData(&task)
 	if err != nil {
 		log.Println(err)
 		return 0, err
@@ -52,8 +45,8 @@ func (s *Service) AddTask(r *http.Request) (int, error) {
 	return id, nil
 }
 
-func (s *Service) TasksList(w http.ResponseWriter) error {
-	tasks, err := s.repo.SelectSQL()
+func (s *Service) GetTasksList(w http.ResponseWriter) error {
+	tasks, err := s.repo.GetData()
 	if err != nil {
 		return err
 	}
@@ -81,12 +74,19 @@ func (s *Service) UpdateTask(r *http.Request) error {
 		return errors.New("invalid id format")
 	}
 
-	task, err := s.repo.SelectByID(id)
+	task, err := s.repo.GetDataByID(id)
 	if err != nil {
 		return err
 	}
 
-	err = s.repo.UpdateSQL(task)
+	newTime, err := nextDate(time.Now(), task.Date, task.Repeat)
+	if err != nil {
+		return err
+	}
+
+	task.Date = newTime
+
+	err = s.repo.UpdateDataByID(task)
 	if err != nil {
 		return err
 	}

@@ -1,6 +1,7 @@
 package services
 
 import (
+	"Go/internal/models"
 	"errors"
 	"strconv"
 	"strings"
@@ -9,11 +10,11 @@ import (
 
 var (
 	ErrInvalidFormatMessage = errors.New("invalid repeat format")
-	layout = "20060102"
-	timeNow = time.Now()
+	layout                  = "20060102"
+	timeNow                 = time.Now()
 )
 
-func NextDate(now time.Time, dstart string, repeat string) (string, error) {
+func nextDate(now time.Time, dstart string, repeat string) (string, error) {
 	err := repeatCheck(repeat)
 	if err != nil {
 		return "", err
@@ -24,7 +25,7 @@ func NextDate(now time.Time, dstart string, repeat string) (string, error) {
 		return "", errors.New("invalid date format")
 	}
 
-	nextDate, err := NextDateAfter(now, dStartFormat, repeat)
+	nextDate, err := nextDateAfter(now, dStartFormat, repeat)
 	if err != nil {
 		return "", err
 	}
@@ -32,7 +33,7 @@ func NextDate(now time.Time, dstart string, repeat string) (string, error) {
 	return nextDate.Format(layout), nil
 }
 
-func NextDateAfter(now, start time.Time, repeat string) (time.Time, error) {
+func nextDateAfter(now, start time.Time, repeat string) (time.Time, error) {
 	repeatSplit := strings.Fields(strings.TrimSpace(repeat))
 
 	if len(repeatSplit) == 0 {
@@ -43,7 +44,7 @@ func NextDateAfter(now, start time.Time, repeat string) (time.Time, error) {
 	case "d":
 		return nextDays(now, start, repeatSplit[1])
 	case "y":
-		return nextYear(now, start, repeatSplit[1])
+		return nextYear(now, start)
 	default:
 		return time.Time{}, errors.New("invalid repeat format")
 	}
@@ -63,16 +64,27 @@ func nextDays(now, start time.Time, part string) (time.Time, error) {
 		return start, nil
 	}
 
+	for {
+		start = start.AddDate(0, 0, numb)
+		if start.After(now) {
+			break
+		}
+	}
+
 	newDate := now.AddDate(0, 0, numb)
 
 	return newDate, nil
 }
 
-func nextYear(now, start time.Time, part string) (time.Time, error) {
+func nextYear(now, start time.Time) (time.Time, error) {
+	for {
+		start = start.AddDate(1, 0, 0)
+		if start.After(now) {
+			break
+		}
+	}
 
-	newYear := now.AddDate(1, 0, 0)
-
-	return newYear, nil
+	return start, nil
 }
 
 func repeatCheck(repeat string) error {
@@ -95,6 +107,19 @@ func repeatCheck(repeat string) error {
 		if err != nil {
 			return errMessage
 		}
+	}
+
+	return nil
+}
+
+func checkDate(task models.Task) error {
+	t, err := time.Parse(layout, task.Date)
+	if err != nil {
+		return errors.New("invalid date format")
+	}
+
+	if task.Date == "" {
+		task.Date = timeNow.Format(layout)
 	}
 
 	return nil

@@ -14,7 +14,7 @@ func NewRepository(db *sql.DB) *Repository {
 	return &Repository{db: db}
 }
 
-func (r *Repository) InsertSQL(task *models.Task) (int, error) {
+func (r *Repository) AddData(task *models.Task) (int, error) {
 	query := `
 	INSERT INTO scheduler (date, title, comment, repeat)
 	VALUES (:date, :title, :comment, :repeat);
@@ -35,7 +35,7 @@ func (r *Repository) InsertSQL(task *models.Task) (int, error) {
 	return int(id), err
 }
 
-func (r *Repository) SelectSQL() ([]models.Task, error) {
+func (r *Repository) GetData() ([]models.Task, error) {
 	query := `
 	SELECT *
 	FROM scheduler
@@ -70,7 +70,7 @@ func (r *Repository) SelectSQL() ([]models.Task, error) {
 	return tasks, nil
 }
 
-func (r *Repository) UpdateSQL(task models.Task) error {
+func (r *Repository) UpdateDataByID(task models.Task) error {
 	query := `
 	UPDATE scheduler
 	SET date = :date, title = :title, comment = :comment, repeat = :repeat
@@ -87,7 +87,7 @@ func (r *Repository) UpdateSQL(task models.Task) error {
 	return err
 }
 
-func (r *Repository) SelectByID(id int) (models.Task, error) {
+func (r *Repository) GetDataByID(id int) (models.Task, error) {
 	query := `
 	SELECT id, date, title, comment, repeat
 	FROM scheduler
