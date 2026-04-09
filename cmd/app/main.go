@@ -43,6 +43,7 @@ func main() {
 
 	srv.Post("/api/task", hand.TaskHandler)
 	srv.Get("/api/task", hand.TaskHandler)
+	srv.Get("/api/nextdate", hand.NextDate)
 
 	log.Fatal(http.ListenAndServe(port, srv))
 }

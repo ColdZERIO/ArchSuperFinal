@@ -28,13 +28,11 @@ func NewService(repo Repository) *Service {
 func (s *Service) AddTask(r *http.Request) (int, error) {
 	var task models.Task
 
-	decod := json.NewDecoder(r.Body)
-	err := decod.Decode(&task)
+	err := json.NewDecoder(r.Body).Decode(&task)
 	if err != nil {
 		log.Println(err)
 		return 0, err
 	}
-	defer r.Body.Close()
 
 	id, err := s.repo.AddData(&task)
 	if err != nil {
@@ -79,12 +77,12 @@ func (s *Service) UpdateTask(r *http.Request) error {
 		return err
 	}
 
-	newTime, err := nextDate(time.Now(), task.Date, task.Repeat)
-	if err != nil {
-		return err
-	}
+	// newTime, err := nextDate(time.Now(), task.Date, task.Repeat)
+	// if err != nil {
+	// 	return err
+	// }
 
-	task.Date = newTime
+	//task.Date = newTime
 
 	err = s.repo.UpdateDataByID(task)
 	if err != nil {
@@ -92,4 +90,18 @@ func (s *Service) UpdateTask(r *http.Request) error {
 	}
 
 	return nil
+}
+
+func (s *Service) NextDate(now, date, repeat string) (int, error) {
+	 timeNow, err := time.Parse(layout, now)
+	 if err != nil {
+		return 0, err
+	 }
+
+	 newTime, err := nextDate(timeNow, date, repeat)
+	 if err != nil {
+		return 0, err
+	 }
+
+	 return newTime, nil
 }

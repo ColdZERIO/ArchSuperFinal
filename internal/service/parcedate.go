@@ -1,7 +1,6 @@
 package services
 
 import (
-	"Go/internal/models"
 	"errors"
 	"strconv"
 	"strings"
@@ -14,23 +13,28 @@ var (
 	timeNow                 = time.Now()
 )
 
-func nextDate(now time.Time, dstart string, repeat string) (string, error) {
+func nextDate(now time.Time, dstart string, repeat string) (int, error) {
 	err := repeatCheck(repeat)
 	if err != nil {
-		return "", err
+		return 0, err
 	}
 
 	dStartFormat, err := time.Parse(layout, dstart)
 	if err != nil {
-		return "", errors.New("invalid date format")
+		return 0, errors.New("invalid date format")
 	}
 
 	nextDate, err := nextDateAfter(now, dStartFormat, repeat)
 	if err != nil {
-		return "", err
+		return 0, err
 	}
 
-	return nextDate.Format(layout), nil
+	nextDateInt, err := strconv.Atoi(nextDate.Format(layout))
+	if err != nil {
+		return 0, err
+	}
+
+	return nextDateInt, nil
 }
 
 func nextDateAfter(now, start time.Time, repeat string) (time.Time, error) {
@@ -60,10 +64,6 @@ func nextDays(now, start time.Time, part string) (time.Time, error) {
 		return time.Time{}, ErrInvalidFormatMessage
 	}
 
-	if start.After(now) {
-		return start, nil
-	}
-
 	for {
 		start = start.AddDate(0, 0, numb)
 		if start.After(now) {
@@ -71,9 +71,7 @@ func nextDays(now, start time.Time, part string) (time.Time, error) {
 		}
 	}
 
-	newDate := now.AddDate(0, 0, numb)
-
-	return newDate, nil
+	return start, nil
 }
 
 func nextYear(now, start time.Time) (time.Time, error) {
@@ -92,12 +90,13 @@ func repeatCheck(repeat string) error {
 		return errors.New("repeat value is empty")
 	}
 
-	repeatSplit := strings.Split(repeat, " ")
-	errMessage := errors.New("invelid repeat format")
+	repeatTrim := strings.TrimSpace(repeat)
+	repeatSplit := strings.Split(repeatTrim, " ")
+	errMessage := errors.New("invalid repeat format")
 
 	letter := repeatSplit[0]
 
-	if letter != "" && letter != "d" || letter != "y" {
+	if letter != "d" && letter != "y" {
 		return errMessage
 	}
 
@@ -107,19 +106,6 @@ func repeatCheck(repeat string) error {
 		if err != nil {
 			return errMessage
 		}
-	}
-
-	return nil
-}
-
-func checkDate(task models.Task) error {
-	t, err := time.Parse(layout, task.Date)
-	if err != nil {
-		return errors.New("invalid date format")
-	}
-
-	if task.Date == "" {
-		task.Date = timeNow.Format(layout)
 	}
 
 	return nil
