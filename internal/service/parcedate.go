@@ -96,17 +96,20 @@ func repeatCheck(repeat string) error {
 
 	letter := repeatSplit[0]
 
-	if letter != "d" && letter != "y" {
-		return errMessage
-	}
-
-	strList := strings.Split(repeatSplit[1], ",")
-	for _, v := range strList {
-		_, err := strconv.Atoi(v)
-		if err != nil {
-			return errMessage
+	if letter == "d" || letter == "y" {
+		strList := strings.Split(repeatSplit[1], ",")
+		for _, v := range strList {
+			_, err := strconv.Atoi(v)
+			if err != nil {
+				return errMessage
+			}
 		}
+		return nil
 	}
 
-	return nil
+	return errMessage
+}
+
+func afterNow(date, now time.Time) bool {
+	return date.After(now)
 }

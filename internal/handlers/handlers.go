@@ -25,11 +25,7 @@ func (h *Handler) TaskHandler(w http.ResponseWriter, r *http.Request) {
 	case http.MethodPost:
 		id, err := h.service.AddTask(r)
 		if err != nil {
-			w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-			w.WriteHeader(http.StatusInternalServerError)
-			json.NewEncoder(w).Encode(map[string]any{
-				"error": err.Error(),
-			})
+			responseJson(err, w)
 			return
 		}
 
@@ -47,11 +43,7 @@ func (h *Handler) TaskHandler(w http.ResponseWriter, r *http.Request) {
 	case http.MethodGet:
 		err := h.service.GetTasksList(w)
 		if err != nil {
-			w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-			w.WriteHeader(http.StatusInternalServerError)
-			json.NewEncoder(w).Encode(map[string]any{
-				"error": err.Error(),
-			})
+			responseJson(err, w)
 			return
 		}
 
@@ -61,11 +53,7 @@ func (h *Handler) TaskHandler(w http.ResponseWriter, r *http.Request) {
 	case http.MethodPut:
 		err := h.service.UpdateTask(r)
 		if err != nil {
-			w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-			w.WriteHeader(http.StatusInternalServerError)
-			json.NewEncoder(w).Encode(map[string]any{
-				"error": err.Error(),
-			})
+			responseJson(err, w)
 			return
 		}
 
@@ -84,11 +72,7 @@ func (h *Handler) NextDate(w http.ResponseWriter, r *http.Request) {
 
 	newDate, err := h.service.NextDate(now, date, repeat)
 	if err != nil {
-		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(map[string]any{
-			"error": err.Error(),
-		})
+		responseJson(err, w)
 		return
 	}
 
