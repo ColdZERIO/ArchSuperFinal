@@ -37,13 +37,16 @@ func main() {
 	hand := handlers.NewHandler(svc)
 
 	srv := chi.NewRouter()
-	srv.Handle("/*", http.FileServer(http.Dir(webDir)))
 
 	log.Printf("Server START http://localhost%s/\n", port)
 
 	srv.Post("/api/task", hand.TaskHandler)
+	srv.Post("/api/task/done", hand.TaskHandler)
 	srv.Get("/api/task", hand.TaskHandler)
+	srv.Get("/api/tasks", hand.TaskHandler)
 	srv.Get("/api/nextdate", hand.NextDate)
+
+	srv.Handle("/*", http.FileServer(http.Dir(webDir)))
 
 	log.Fatal(http.ListenAndServe(port, srv))
 }

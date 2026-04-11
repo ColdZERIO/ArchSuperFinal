@@ -2,12 +2,16 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
+
+	"Go/internal/models"
 )
 
 type Service interface {
 	AddTask(*http.Request) (int, error)
 	GetTasksList(http.ResponseWriter) error
+	GetTask(*http.Request) (*models.Task, error)
 	UpdateTask(*http.Request) error
 	NextDate(string, string, string) (int, error)
 }
@@ -41,14 +45,31 @@ func (h *Handler) TaskHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 	case http.MethodGet:
+		if r.URL.Path == "/api/task" {
+			id := r.URL.Query().Get("id")
+			if id == "" {
+				responseJson(errors.New("Не указан идентификатор"), w)
+				return
+			}
+
+			task, err := h.service.GetTask(r)
+			if err != nil {
+				responseJson(err, w)
+				return
+			}
+
+			w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+			w.WriteHeader(http.StatusOK)
+			json.NewEncoder(w).Encode(task)
+			return
+		}
+
 		err := h.service.GetTasksList(w)
 		if err != nil {
 			responseJson(err, w)
 			return
 		}
-
-		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-		w.WriteHeader(http.StatusOK)
+		return
 
 	case http.MethodPut:
 		err := h.service.UpdateTask(r)
@@ -59,6 +80,7 @@ func (h *Handler) TaskHandler(w http.ResponseWriter, r *http.Request) {
 
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(map[string]any{})
 
 	default:
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
