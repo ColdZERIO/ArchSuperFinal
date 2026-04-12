@@ -1,0 +1,19 @@
+# Build artifacts
+app
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Local files
+.env
+*.log
+
+# Tests
+tests
+*.test
+
+# IDE
+.vscode
+.idea
+.DS_Store

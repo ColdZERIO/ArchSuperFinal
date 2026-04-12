@@ -6,6 +6,7 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -15,6 +16,7 @@ type Repository interface {
 	GetData() ([]models.Task, error)
 	UpdateData(task *models.Task) error
 	GetDataByID(id string) (*models.Task, error)
+	DeleteTask(id string) error
 }
 
 type Service struct {
@@ -159,4 +161,37 @@ func (s *Service) NextDate(now, date, repeat string) (int, error) {
 	}
 
 	return newTime, nil
+}
+
+func (s *Service) TaskDone(id string) error {
+	if id == "" {
+		return errors.New("id is empty")
+	}
+
+	task, err := s.repo.GetDataByID(id)
+	if err != nil {
+		return err
+	}
+
+	if task.Repeat == "" {
+		return s.repo.DeleteTask(id)
+	}
+
+	timeNow := time.Now()
+	newDate, err := nextDate(timeNow, task.Date, task.Repeat)
+	if err != nil {
+		return err
+	}
+
+	task.Date = strconv.Itoa(newDate)
+
+	return s.repo.UpdateData(task)
+}
+
+func (s *Service) DeleteTask(id string) error {
+	if id == "" {
+		return errors.New("id is empty")
+	}
+
+	return s.repo.DeleteTask(id)
 }

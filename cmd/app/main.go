@@ -17,7 +17,10 @@ import (
 func main() {
 	err := godotenv.Load()
 	if err != nil {
-		log.Fatal(err)
+		if !os.IsNotExist(err) {
+			log.Fatal(err)
+		}
+		log.Println(".env not found, using environment/default values")
 	}
 
 	port := getEnv("TODO_PORT", ":7540")
@@ -41,7 +44,9 @@ func main() {
 	log.Printf("Server START http://localhost%s/\n", port)
 
 	srv.Post("/api/task", hand.TaskHandler)
-	srv.Post("/api/task/done", hand.TaskHandler)
+	srv.Put("/api/task", hand.TaskHandler)
+	srv.Post("/api/task/done", hand.TaskDone)
+	srv.Delete("/api/task", hand.DeleteTask)
 	srv.Get("/api/task", hand.TaskHandler)
 	srv.Get("/api/tasks", hand.TaskHandler)
 	srv.Get("/api/nextdate", hand.NextDate)

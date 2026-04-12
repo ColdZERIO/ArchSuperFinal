@@ -14,6 +14,8 @@ type Service interface {
 	GetTask(*http.Request) (*models.Task, error)
 	UpdateTask(*http.Request) error
 	NextDate(string, string, string) (int, error)
+	TaskDone(id string) error
+	DeleteTask(id string) error
 }
 
 type Handler struct {
@@ -104,4 +106,40 @@ func (h *Handler) NextDate(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
+}
+
+func (h *Handler) TaskDone(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"error": "метод не поддерживается",
+		})
+		return
+	}
+
+	taskID := r.URL.Query().Get("id")
+	err := h.service.TaskDone(taskID)
+	if err != nil {
+		responseJson(err, w)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]any{})
+}
+
+func (h *Handler) DeleteTask(w http.ResponseWriter, r *http.Request) {
+	taskID := r.URL.Query().Get("id")
+
+	err := h.service.DeleteTask(taskID)
+	if err != nil {
+		responseJson(err, w)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]any{})
 }

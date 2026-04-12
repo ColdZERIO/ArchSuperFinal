@@ -7,3 +7,7 @@ type Task struct {
 	Comment string `json:"comment"`
 	Repeat  string `json:"repeat"`
 }
+
+type ErrorMsg struct {
+	Err string `json:"error,omitempty"`
+}

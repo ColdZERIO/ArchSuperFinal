@@ -117,3 +117,25 @@ func (r *Repository) GetDataByID(id string) (*models.Task, error) {
 
 	return task, nil
 }
+
+func (r *Repository) DeleteTask(id string) error {
+	query := `
+	DELETE FROM scheduler
+	WHERE id = :id
+	`
+
+	res, err := r.db.Exec(query, sql.Named("id", id))
+	if err != nil {
+		return err
+	}
+
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rows == 0 {
+		return errors.New("задача не найдена")
+	}
+
+	return nil
+}
