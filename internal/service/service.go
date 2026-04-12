@@ -7,14 +7,16 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 )
 
 type Repository interface {
-	AddData(*models.Task) (int, error)
+	AddData(task *models.Task) (int, error)
 	GetData() ([]models.Task, error)
-	GetDataByID(int) (models.Task, error)
-	UpdateDataByID(models.Task) error
+	UpdateData(task *models.Task) error
+	GetDataByID(id string) (*models.Task, error)
+	DeleteTask(id string) error
 }
 
 type Service struct {
@@ -34,6 +36,27 @@ func (s *Service) AddTask(r *http.Request) (int, error) {
 		return 0, err
 	}
 
+	if task.Title == "" {
+		return 0, errors.New("Не указан заголовок задачи")
+	}
+
+	if task.Date == "" {
+		task.Date = time.Now().Format(layout)
+	}
+
+	if err = repeatCheck(task.Repeat); err != nil {
+		return 0, err
+	}
+
+	taskDate, err := time.Parse(layout, task.Date)
+	if err != nil {
+		return 0, err
+	}
+
+	if time.Now().After(taskDate) {
+		task.Date = time.Now().Format(layout)
+	}
+
 	id, err := s.repo.AddData(&task)
 	if err != nil {
 		log.Println(err)
@@ -44,6 +67,7 @@ func (s *Service) AddTask(r *http.Request) (int, error) {
 }
 
 func (s *Service) GetTasksList(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	tasks, err := s.repo.GetData()
 	if err != nil {
 		return err
@@ -61,15 +85,87 @@ func (s *Service) GetTasksList(w http.ResponseWriter) error {
 	return nil
 }
 
-func (s *Service) UpdateTask(r *http.Request) error {
-	queryID := r.URL.Query().Get("id")
-	if queryID == "" {
-		return errors.New("id is empty")
+func (s *Service) GetTask(r *http.Request) (*models.Task, error) {
+	id := r.URL.Query().Get("id")
+	if id == "" {
+		return nil, errors.New("Не указан идентификатор")
 	}
 
-	id, err := strconv.Atoi(queryID)
+	task, err := s.repo.GetDataByID(id)
 	if err != nil {
-		return errors.New("invalid id format")
+		return nil, err
+	}
+
+	return task, nil
+}
+
+func (s *Service) GetTaskByID(id string) (*models.Task, error) {
+	if strings.TrimSpace(id) == "" {
+		return nil, errors.New("invalid id")
+	}
+
+	return s.repo.GetDataByID(id)
+}
+
+func (s *Service) UpdateTask(r *http.Request) error {
+	var task models.Task
+
+	if err := json.NewDecoder(r.Body).Decode(&task); err != nil {
+		return err
+	}
+
+	if task.ID == "" {
+		return errors.New("Не указан идентификатор")
+	}
+
+	if task.Title == "" {
+		return errors.New("Не указан заголовок задачи")
+	}
+
+	if task.Date == "" {
+		task.Date = time.Now().Format(layout)
+	}
+
+	if err := repeatCheck(task.Repeat); err != nil {
+		return err
+	}
+
+	taskDate, err := time.Parse(layout, task.Date)
+	if err != nil {
+		return err
+	}
+
+	if time.Now().After(taskDate) {
+		task.Date = time.Now().Format(layout)
+	}
+
+	return s.repo.UpdateData(&task)
+}
+
+func (s *Service) NextDate(now, date, repeat string) (int, error) {
+	var timeNow time.Time
+	var err error
+
+	if now == "" {
+		timeNow = time.Now()
+	} else {
+		timeNow, err = time.Parse(layout, now)
+		if err != nil {
+			return 0, err
+		}
+	}
+
+	newTime, err := nextDate(timeNow, date, repeat)
+	if err != nil {
+		return 0, err
+	}
+
+	return newTime, nil
+}
+
+func (s *Service) TaskDone(id string) error {
+	if id == "" {
+		return errors.New("id is empty")
 	}
 
 	task, err := s.repo.GetDataByID(id)
@@ -77,31 +173,25 @@ func (s *Service) UpdateTask(r *http.Request) error {
 		return err
 	}
 
-	// newTime, err := nextDate(time.Now(), task.Date, task.Repeat)
-	// if err != nil {
-	// 	return err
-	// }
+	if task.Repeat == "" {
+		return s.repo.DeleteTask(id)
+	}
 
-	//task.Date = newTime
-
-	err = s.repo.UpdateDataByID(task)
+	timeNow := time.Now()
+	newDate, err := nextDate(timeNow, task.Date, task.Repeat)
 	if err != nil {
 		return err
 	}
 
-	return nil
+	task.Date = strconv.Itoa(newDate)
+
+	return s.repo.UpdateData(task)
 }
 
-func (s *Service) NextDate(now, date, repeat string) (int, error) {
-	 timeNow, err := time.Parse(layout, now)
-	 if err != nil {
-		return 0, err
-	 }
+func (s *Service) DeleteTask(id string) error {
+	if id == "" {
+		return errors.New("id is empty")
+	}
 
-	 newTime, err := nextDate(timeNow, date, repeat)
-	 if err != nil {
-		return 0, err
-	 }
-
-	 return newTime, nil
+	return s.repo.DeleteTask(id)
 }

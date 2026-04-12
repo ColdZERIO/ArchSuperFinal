@@ -3,6 +3,7 @@ package repository
 import (
 	"Go/internal/models"
 	"database/sql"
+	"errors"
 	"log"
 )
 
@@ -37,9 +38,9 @@ func (r *Repository) AddData(task *models.Task) (int, error) {
 
 func (r *Repository) GetData() ([]models.Task, error) {
 	query := `
-	SELECT *
+	SELECT id, date, title, comment, repeat
 	FROM scheduler
-	ORDER BY id DESC
+	ORDER BY date ASC
 	LIMIT 50;
 	`
 
@@ -50,11 +51,11 @@ func (r *Repository) GetData() ([]models.Task, error) {
 	}
 	defer rows.Close()
 
-	var tasks []models.Task
+	tasks := make([]models.Task, 0)
 
 	for rows.Next() {
 		var task models.Task
-		err := rows.Scan(&task.ID, &task.Title, &task.Comment, &task.Date)
+		err := rows.Scan(&task.ID, &task.Date, &task.Title, &task.Comment, &task.Repeat)
 		if err != nil {
 			return nil, err
 		}
@@ -62,32 +63,40 @@ func (r *Repository) GetData() ([]models.Task, error) {
 		tasks = append(tasks, task)
 	}
 
-	err = rows.Err()
-	if err != nil {
+	if err = rows.Err(); err != nil {
 		return nil, err
 	}
 
 	return tasks, nil
 }
 
-func (r *Repository) UpdateDataByID(task models.Task) error {
+func (r *Repository) UpdateData(task *models.Task) error {
 	query := `
 	UPDATE scheduler
 	SET date = :date, title = :title, comment = :comment, repeat = :repeat
 	WHERE id = :id;
 	`
 
-	_, err := r.db.Exec(query,
+	res, err := r.db.Exec(query,
 		sql.Named("date", task.Date),
 		sql.Named("title", task.Title),
 		sql.Named("comment", task.Comment),
 		sql.Named("repeat", task.Repeat),
+		sql.Named("id", task.ID),
 	)
 
-	return err
+	count, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if count == 0 {
+		return errors.New("Задача не найдена")
+	}
+
+	return nil
 }
 
-func (r *Repository) GetDataByID(id int) (models.Task, error) {
+func (r *Repository) GetDataByID(id string) (*models.Task, error) {
 	query := `
 	SELECT id, date, title, comment, repeat
 	FROM scheduler
@@ -96,12 +105,37 @@ func (r *Repository) GetDataByID(id int) (models.Task, error) {
 
 	row := r.db.QueryRow(query, sql.Named("id", id))
 
-	var task models.Task
+	task := &models.Task{}
 
 	err := row.Scan(&task.ID, &task.Date, &task.Title, &task.Comment, &task.Repeat)
 	if err != nil {
-		return models.Task{}, err
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, errors.New("Задача не найдена")
+		}
+		return nil, err
 	}
 
 	return task, nil
+}
+
+func (r *Repository) DeleteTask(id string) error {
+	query := `
+	DELETE FROM scheduler
+	WHERE id = :id
+	`
+
+	res, err := r.db.Exec(query, sql.Named("id", id))
+	if err != nil {
+		return err
+	}
+
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rows == 0 {
+		return errors.New("задача не найдена")
+	}
+
+	return nil
 }

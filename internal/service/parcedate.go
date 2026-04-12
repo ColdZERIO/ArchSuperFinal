@@ -87,7 +87,7 @@ func nextYear(now, start time.Time) (time.Time, error) {
 
 func repeatCheck(repeat string) error {
 	if repeat == "" {
-		return errors.New("repeat value is empty")
+		return nil
 	}
 
 	repeatTrim := strings.TrimSpace(repeat)
@@ -96,17 +96,31 @@ func repeatCheck(repeat string) error {
 
 	letter := repeatSplit[0]
 
-	if letter != "d" && letter != "y" {
-		return errMessage
-	}
-
-	strList := strings.Split(repeatSplit[1], ",")
-	for _, v := range strList {
-		_, err := strconv.Atoi(v)
-		if err != nil {
+	if letter == "d" {
+		if len(repeatSplit) <= 1 {
 			return errMessage
 		}
+
+		strList := strings.Split(repeatSplit[1], ",")
+		for _, v := range strList {
+			_, err := strconv.Atoi(v)
+			if err != nil {
+				return errMessage
+			}
+		}
+		return nil
 	}
 
-	return nil
+	if letter == "y" {
+		if len(repeatSplit) > 1 {
+			return errMessage
+		}
+		return nil
+	}
+
+	return errMessage
+}
+
+func afterNow(date, now time.Time) bool {
+	return date.After(now)
 }
