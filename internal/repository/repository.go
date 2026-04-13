@@ -7,6 +7,8 @@ import (
 	"log"
 )
 
+const limitRows int = 50
+
 type Repository struct {
 	db *sql.DB
 }
@@ -41,10 +43,10 @@ func (r *Repository) GetData() ([]models.Task, error) {
 	SELECT id, date, title, comment, repeat
 	FROM scheduler
 	ORDER BY date ASC
-	LIMIT 50;
+	LIMIT :limitRows;
 	`
 
-	rows, err := r.db.Query(query)
+	rows, err := r.db.Query(query, sql.Named("limitRows", limitRows))
 	if err != nil {
 		log.Fatal(err)
 		return nil, err

@@ -7,7 +7,6 @@ import (
 	"log"
 	"net/http"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -97,14 +96,6 @@ func (s *Service) GetTask(r *http.Request) (*models.Task, error) {
 	}
 
 	return task, nil
-}
-
-func (s *Service) GetTaskByID(id string) (*models.Task, error) {
-	if strings.TrimSpace(id) == "" {
-		return nil, errors.New("invalid id")
-	}
-
-	return s.repo.GetDataByID(id)
 }
 
 func (s *Service) UpdateTask(r *http.Request) error {

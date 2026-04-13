@@ -9,11 +9,11 @@ import (
 )
 
 type Service interface {
-	AddTask(*http.Request) (int, error)
-	GetTasksList(http.ResponseWriter) error
-	GetTask(*http.Request) (*models.Task, error)
-	UpdateTask(*http.Request) error
-	NextDate(string, string, string) (int, error)
+	AddTask(r *http.Request) (int, error)
+	GetTasksList(w http.ResponseWriter) error
+	GetTask(r *http.Request) (*models.Task, error)
+	UpdateTask(r *http.Request) error
+	NextDate(now, date, repeat string) (int, error)
 	TaskDone(id string) error
 	DeleteTask(id string) error
 }
@@ -31,7 +31,7 @@ func (h *Handler) TaskHandler(w http.ResponseWriter, r *http.Request) {
 	case http.MethodPost:
 		id, err := h.service.AddTask(r)
 		if err != nil {
-			responseJson(err, w)
+			responseJson(err, w, http.StatusBadRequest)
 			return
 		}
 
@@ -50,13 +50,13 @@ func (h *Handler) TaskHandler(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/api/task" {
 			id := r.URL.Query().Get("id")
 			if id == "" {
-				responseJson(errors.New("Не указан идентификатор"), w)
+				responseJson(errors.New("Не указан идентификатор"), w, http.StatusBadRequest)
 				return
 			}
 
 			task, err := h.service.GetTask(r)
 			if err != nil {
-				responseJson(err, w)
+				responseJson(err, w, http.StatusInternalServerError)
 				return
 			}
 
@@ -68,7 +68,7 @@ func (h *Handler) TaskHandler(w http.ResponseWriter, r *http.Request) {
 
 		err := h.service.GetTasksList(w)
 		if err != nil {
-			responseJson(err, w)
+			responseJson(err, w, http.StatusInternalServerError)
 			return
 		}
 		return
@@ -76,7 +76,7 @@ func (h *Handler) TaskHandler(w http.ResponseWriter, r *http.Request) {
 	case http.MethodPut:
 		err := h.service.UpdateTask(r)
 		if err != nil {
-			responseJson(err, w)
+			responseJson(err, w, http.StatusBadRequest)
 			return
 		}
 
@@ -96,7 +96,7 @@ func (h *Handler) NextDate(w http.ResponseWriter, r *http.Request) {
 
 	newDate, err := h.service.NextDate(now, date, repeat)
 	if err != nil {
-		responseJson(err, w)
+		responseJson(err, w, http.StatusInternalServerError)
 		return
 	}
 
@@ -121,7 +121,7 @@ func (h *Handler) TaskDone(w http.ResponseWriter, r *http.Request) {
 	taskID := r.URL.Query().Get("id")
 	err := h.service.TaskDone(taskID)
 	if err != nil {
-		responseJson(err, w)
+		responseJson(err, w, http.StatusBadRequest)
 		return
 	}
 
@@ -135,7 +135,7 @@ func (h *Handler) DeleteTask(w http.ResponseWriter, r *http.Request) {
 
 	err := h.service.DeleteTask(taskID)
 	if err != nil {
-		responseJson(err, w)
+		responseJson(err, w, http.StatusInternalServerError)
 		return
 	}
 
